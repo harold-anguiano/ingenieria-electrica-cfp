@@ -1,17 +1,23 @@
 import React from 'react';
-import { LayoutDashboard, FileCheck2, PlusCircle, Barcode, Server } from 'lucide-react';
+import { LayoutDashboard, FileCheck2, PlusCircle, ClipboardList, Wrench, ShieldCheck } from 'lucide-react';
 import { ActiveTab } from './Sidebar';
 
 interface BottomBarProps {
   currentTab: ActiveTab;
   onSelectTab: (tab: ActiveTab) => void;
   reportsCount: number;
+  serviceRequestsCount?: number;
+  operatingConditionsCount?: number;
+  safetyEvaluationsCount?: number;
 }
 
 export const BottomBar: React.FC<BottomBarProps> = ({
   currentTab,
   onSelectTab,
   reportsCount,
+  serviceRequestsCount = 0,
+  operatingConditionsCount = 0,
+  safetyEvaluationsCount = 0,
 }) => {
   const tabs = [
     {
@@ -21,9 +27,27 @@ export const BottomBar: React.FC<BottomBarProps> = ({
     },
     {
       id: 'nuevo_dictamen' as ActiveTab,
-      label: '+ Nuevo',
+      label: '+ Dictamen',
       icon: PlusCircle,
       isAction: true,
+    },
+    {
+      id: 'solicitud_servicios' as ActiveTab,
+      label: 'Solicitud',
+      icon: ClipboardList,
+      badge: serviceRequestsCount,
+    },
+    {
+      id: 'condiciones_operativas' as ActiveTab,
+      label: 'Rev. Eléc.',
+      icon: Wrench,
+      badge: operatingConditionsCount,
+    },
+    {
+      id: 'evaluacion_seguridad' as ActiveTab,
+      label: 'Seguridad',
+      icon: ShieldCheck,
+      badge: safetyEvaluationsCount,
     },
     {
       id: 'revisiones' as ActiveTab,
@@ -31,21 +55,11 @@ export const BottomBar: React.FC<BottomBarProps> = ({
       icon: FileCheck2,
       badge: reportsCount,
     },
-    {
-      id: 'verificador' as ActiveTab,
-      label: 'Escanear',
-      icon: Barcode,
-    },
-    {
-      id: 'configuracion' as ActiveTab,
-      label: 'Datos',
-      icon: Server,
-    },
   ];
 
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 safe-area-pb shadow-2xl">
-      <div className="grid grid-cols-5 h-16 max-w-lg mx-auto px-1">
+      <div className="grid grid-cols-6 h-16 max-w-xl mx-auto px-0.5">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = currentTab === tab.id;

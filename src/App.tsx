@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { UserRole, RevisionReport } from './types';
+import { UserRole, RevisionReport, ServiceRequest, OperatingConditionsReport, SafetyEvaluationReport } from './types';
 import { 
   getActiveRole, 
   setActiveRole as persistActiveRole, 
   getRevisionReports, 
   saveRevisionReport, 
-  deleteRevisionReport 
+  deleteRevisionReport,
+  getServiceRequests,
+  saveServiceRequest,
+  deleteServiceRequest,
+  getOperatingConditionsReports,
+  saveOperatingConditionsReport,
+  deleteOperatingConditionsReport,
+  getSafetyEvaluations,
+  saveSafetyEvaluation,
+  deleteSafetyEvaluation
 } from './utils/storage';
 import { usePWAInstall } from './hooks/usePWAInstall';
 import { RoleSelector } from './components/RoleSelector';
@@ -14,6 +23,9 @@ import { Sidebar, ActiveTab } from './components/Sidebar';
 import { BottomBar } from './components/BottomBar';
 import { DashboardOverview } from './components/DashboardOverview';
 import { RevisionModule } from './components/RevisionModule';
+import { ServiceRequestModule } from './components/ServiceRequestModule';
+import { OperatingConditionsModule } from './components/OperatingConditionsModule';
+import { SafetyEvaluationModule } from './components/SafetyEvaluationModule';
 import { BarcodeVerifier } from './components/BarcodeVerifier';
 import { SupabaseConfigView } from './components/SupabaseConfigView';
 import { PWAInstallModal } from './components/PWAInstallModal';
@@ -31,15 +43,22 @@ export default function App() {
 
   const [currentTab, setCurrentTab] = useState<ActiveTab>('dashboard');
   const [reports, setReports] = useState<RevisionReport[]>(() => getRevisionReports());
+  const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>(() => getServiceRequests());
+  const [operatingConditions, setOperatingConditions] = useState<OperatingConditionsReport[]>(() => getOperatingConditionsReports());
+  const [safetyEvaluations, setSafetyEvaluations] = useState<SafetyEvaluationReport[]>(() => getSafetyEvaluations());
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [isDataModalOpen, setIsDataModalOpen] = useState(false);
 
   const { isInstallable, isInstalled, isIOS, triggerInstall } = usePWAInstall();
 
-  // Reload reports when storage changes
-  const refreshReports = () => {
+  // Reload data when storage changes
+  const refreshAllData = () => {
     setReports(getRevisionReports());
+    setServiceRequests(getServiceRequests());
+    setOperatingConditions(getOperatingConditionsReports());
+    setSafetyEvaluations(getSafetyEvaluations());
   };
 
   const handleSelectRole = (role: UserRole) => {
@@ -53,6 +72,7 @@ export default function App() {
     setCurrentTab('dashboard');
   };
 
+  // Revision Reports CRUD
   const handleSaveReport = (report: RevisionReport) => {
     const updated = saveRevisionReport(report);
     setReports(updated);
@@ -63,8 +83,40 @@ export default function App() {
     setReports(updated);
   };
 
+  // Service Requests CRUD
+  const handleSaveServiceRequest = (req: ServiceRequest) => {
+    const updated = saveServiceRequest(req);
+    setServiceRequests(updated);
+  };
+
+  const handleDeleteServiceRequest = (id: string) => {
+    const updated = deleteServiceRequest(id);
+    setServiceRequests(updated);
+  };
+
+  // Operating Conditions CRUD
+  const handleSaveOperatingConditions = (rep: OperatingConditionsReport) => {
+    const updated = saveOperatingConditionsReport(rep);
+    setOperatingConditions(updated);
+  };
+
+  const handleDeleteOperatingConditions = (id: string) => {
+    const updated = deleteOperatingConditionsReport(id);
+    setOperatingConditions(updated);
+  };
+
+  // Safety Evaluations CRUD
+  const handleSaveSafetyEvaluation = (rep: SafetyEvaluationReport) => {
+    const updated = saveSafetyEvaluation(rep);
+    setSafetyEvaluations(updated);
+  };
+
+  const handleDeleteSafetyEvaluation = (id: string) => {
+    const updated = deleteSafetyEvaluation(id);
+    setSafetyEvaluations(updated);
+  };
+
   // If no role is selected, show exclusively the RoleSelector
-  // (2 cols mobile / 4 cols desktop, no header, no descriptions, only logo and role name)
   if (!activeRole) {
     return <RoleSelector onSelectRole={handleSelectRole} />;
   }
@@ -95,6 +147,9 @@ export default function App() {
           activeRole={activeRole}
           onLogout={handleLogout}
           reportsCount={reports.length}
+          serviceRequestsCount={serviceRequests.length}
+          operatingConditionsCount={operatingConditions.length}
+          safetyEvaluationsCount={safetyEvaluations.length}
         />
 
         {/* Content View Area */}
@@ -105,6 +160,9 @@ export default function App() {
               activeRole={activeRole}
               onNavigate={(tab) => setCurrentTab(tab)}
               onOpenDataModal={() => setIsDataModalOpen(true)}
+              serviceRequestsCount={serviceRequests.length}
+              operatingConditionsCount={operatingConditions.length}
+              safetyEvaluationsCount={safetyEvaluations.length}
             />
           )}
 
@@ -132,6 +190,33 @@ export default function App() {
             />
           )}
 
+          {currentTab === 'solicitud_servicios' && (
+            <ServiceRequestModule
+              requests={serviceRequests}
+              activeRole={activeRole}
+              onSaveRequest={handleSaveServiceRequest}
+              onDeleteRequest={handleDeleteServiceRequest}
+            />
+          )}
+
+          {currentTab === 'condiciones_operativas' && (
+            <OperatingConditionsModule
+              reports={operatingConditions}
+              activeRole={activeRole}
+              onSaveReport={handleSaveOperatingConditions}
+              onDeleteReport={handleDeleteOperatingConditions}
+            />
+          )}
+
+          {currentTab === 'evaluacion_seguridad' && (
+            <SafetyEvaluationModule
+              reports={safetyEvaluations}
+              activeRole={activeRole}
+              onSaveReport={handleSaveSafetyEvaluation}
+              onDeleteReport={handleDeleteSafetyEvaluation}
+            />
+          )}
+
           {currentTab === 'verificador' && (
             <BarcodeVerifier
               reports={reports}
@@ -144,7 +229,7 @@ export default function App() {
           {currentTab === 'configuracion' && (
             <SupabaseConfigView
               reports={reports}
-              onDataChanged={refreshReports}
+              onDataChanged={refreshAllData}
             />
           )}
         </main>
@@ -155,6 +240,9 @@ export default function App() {
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
         reportsCount={reports.length}
+        serviceRequestsCount={serviceRequests.length}
+        operatingConditionsCount={operatingConditions.length}
+        safetyEvaluationsCount={safetyEvaluations.length}
       />
 
       {/* PWA Installation Modal */}
@@ -166,11 +254,11 @@ export default function App() {
         isIOS={isIOS}
       />
 
-      {/* Data Management & Supabase Modal */}
+      {/* Data Management Modal */}
       <DataManagementModal
         isOpen={isDataModalOpen}
         onClose={() => setIsDataModalOpen(false)}
-        onDataChanged={refreshReports}
+        onDataChanged={refreshAllData}
       />
 
     </div>
